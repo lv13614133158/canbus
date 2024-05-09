@@ -30,97 +30,149 @@ std::mutex mtx_130;
 std::mutex mtx_131;
 std::mutex mtx_132;
 std::mutex mtx_140;
+std::mutex mtx_ptr;
 
 VCI_CAN_OBJ canbus_Ctrl_130[1];
 VCI_CAN_OBJ canbus_Ctrl_131[1];
 VCI_CAN_OBJ canbus_Ctrl_132[1];
 VCI_CAN_OBJ canbus_Ctrl_140[1];
 struct Ctrl_130 {
-    uint64_t DriverEnCtrl : 1;
-	uint64_t kong1 :1;
-	uint64_t DriverModeCtrl : 2;
-	uint64_t GearCtrl : 4;
-	uint64_t SpeedCtrl : 16;
-	uint64_t ThrottlePdlTarget : 10;
-	uint64_t kong2 :14;
-	uint64_t DriveLifeSig : 4;
-	uint64_t kong3 : 4;
-	uint64_t CheckSum_130 :8;
+    uint64_t DriverEnCtrl : 1;//加速使能
+	uint64_t kong1 :1;//占位
+	uint64_t DriverModeCtrl : 2;//驱动模式控制 0速度 1油门
+ 	uint64_t GearCtrl : 4;//档位
+	uint64_t SpeedCtrl : 16;//速度控制
+	uint64_t ThrottlePdlTarget : 10;//油门控制
+	uint64_t kong2 :14;//占位
+	uint64_t DriveLifeSig : 4;//循环计数
+	uint64_t kong3 : 4;//占位
+	uint64_t CheckSum_130 :8;//校验
 };
 struct Ctrl_131 {
-    uint64_t BrakeEn : 1;
-	uint64_t kong :3; 
-	uint64_t AebCtrl : 1;
-	uint64_t kong2 :3;
-	uint64_t BrakePdlTarget : 10;
-	uint64_t kong3 : 6 ;
-	uint64_t EpbCtrl :2;
-	uint64_t kong4 : 22;
-	uint64_t LifeSig : 4;
-	uint64_t kong5 : 4;
-	uint64_t CheckSum_131  : 8;
+    uint64_t BrakeEn : 1;//刹车使能
+	uint64_t kong :3; //占位
+	uint64_t AebCtrl : 1;//aeb使能
+	uint64_t kong2 :3;//占位
+	uint64_t BrakePdlTarget : 10;//刹车控制0～100 0.1分辨率
+	uint64_t kong3 : 6 ;//占位
+	uint64_t EpbCtrl :2;//驻车控制 0默认 1刹车 2 释放
+	uint64_t kong4 : 22;//占位
+	uint64_t LifeSig : 4;//循环计数
+	uint64_t kong5 : 4;//占位
+	uint64_t CheckSum_131  : 8;//校验
 
 };
 
 struct Ctrl_132 {
-    uint64_t SteerEnCtrl : 1;
-	uint64_t kong :3;
-	uint64_t SteerModeCtrl : 4;
-	uint64_t SteerAngleTarget : 16;
-	uint64_t SteerAngleRearTarget : 16 ;
-	uint64_t SteerAngleSpeedCtrl :8;
-	uint64_t kong1 :8;
-	uint64_t CheckSum_132 : 8;
+    uint64_t SteerEnCtrl : 1;//转向使能
+	uint64_t kong :3;//占位
+	uint64_t SteerModeCtrl : 4;//转向模式控制
+	uint64_t SteerAngleTarget : 16;//转向控制前
+	uint64_t SteerAngleRearTarget : 16 ;//转向控制后
+	uint64_t SteerAngleSpeedCtrl :8;//方向盘角度控制
+	uint64_t kong1 :8;//占位
+	uint64_t CheckSum_132 : 8;//校验
 
 };
 
 struct Ctrl_140 {
-    uint64_t WorkEnableCtrl : 1;
-	uint64_t SweepModeCtrl :2;
-	uint64_t FanModeCtrl : 2;
-	uint64_t VehicleCtrlModeCtrl : 2;
-	uint64_t EnableCtrl : 1;
-	uint64_t VehiclePosLampCtrl : 1;
-	uint64_t VehicleHeadLampCtrl : 1;
-	uint64_t VehicleLeftLampCtrl: 1;
-	uint64_t VehicleRightLampCtrl:1;
-	uint64_t VehicleHighBeamCtrl:1;
-	uint64_t VehicleFogLampCtrl:1;
-	uint64_t VehicleHazardWarLampCtrl:1;
+    uint64_t WorkEnableCtrl : 1;//上装清扫使能
+	uint64_t SweepModeCtrl :2;//扫盘模式控制
+	uint64_t FanModeCtrl : 2;//风机模式控制
+	uint64_t VehicleCtrlModeCtrl : 2;//车辆模式控制
+	uint64_t EnableCtrl : 1;//上装控制使能
+	uint64_t VehiclePosLampCtrl : 1;//位置灯
+	uint64_t VehicleHeadLampCtrl : 1;//近光灯
+	uint64_t VehicleLeftLampCtrl: 1;//左转向灯
+	uint64_t VehicleRightLampCtrl:1;//右转向灯
+	uint64_t VehicleHighBeamCtrl:1;//远光灯
+	uint64_t VehicleFogLampCtrl:1;//雾灯
+	uint64_t VehicleHazardWarLampCtrl:1;//危险警示灯
 
-	uint64_t VehicleFrontHornCtrl :1;
-	uint64_t VehicleWorkLampCtrl :1;
-	uint64_t VehicleWiperCtrl :1;
-	uint64_t GarbageWashingCtrl :1;
- 	uint64_t UnloadingCtrl :1;
-	uint64_t WashGunCtrl :1;
-	uint64_t BackDoorCtrl :2;
-	uint64_t GarbageCtrl:2;
-	uint64_t ModeCtrl :2;
-	uint64_t SweepCtrl :2;
-	uint64_t GreenLightCtrl :1;
-	uint64_t YellowLightCtrl :1;
-	uint64_t RedLightCtrl :1;
-	uint64_t ArrowLightCtrl:1;
-	uint64_t SweepWaterSprayCtrl :1;
-	uint64_t AlarmBuzzerCtrl:1;
-	uint64_t DustVibrtionCtrl:1;
-	uint64_t DryWetModeCtrl:1;
-	uint64_t NozzleCtrl:1;
-	uint64_t SweepDebugModeCtrl :1;
-	uint64_t FanDebugModeCtrl :1 ;
-	uint64_t Life1 : 8;
+	uint64_t VehicleFrontHornCtrl :1;//前喇叭
+	uint64_t VehicleWorkLampCtrl :1;//作业警示灯控制
+	uint64_t VehicleWiperCtrl :2;//雨刷
+	uint64_t GarbageWashingCtrl :1;//上装清洗控制
+ 	uint64_t UnloadingCtrl :1;//上装卸料控制
+	uint64_t WashGunCtrl :1;//上装洗枪控制
+	uint64_t BackDoorCtrl :2;//上装后门控制
+	uint64_t GarbageCtrl:2;//上装箱体控制
+	uint64_t ModeCtrl :2;//底盘模式
+	uint64_t SweepCtrl :2;//上装扫盘
+	uint64_t GreenLightCtrl :1;//绿色状态灯
+	uint64_t YellowLightCtrl :1;//黄色状态灯
+	uint64_t RedLightCtrl :1;//红色状态灯
+	uint64_t ArrowLightCtrl:1;//箭头灯
+	uint64_t SweepWaterSprayCtrl :1;//扫盘喷水
+	uint64_t AlarmBuzzerCtrl:1;//报警蜂鸣器
+	uint64_t DustVibrtionCtrl:1;//机械振尘
+	uint64_t DryWetModeCtrl:1;//干湿扫模式
+	uint64_t NozzleCtrl:1;//上装吸嘴挡板控制
+	uint64_t SweepDebugModeCtrl :1;//上装扫盘调试模式
+	uint64_t FanDebugModeCtrl :1 ;//上装风机调试模式
+	uint64_t Life1 : 8;//计数器
 
 };
 
 struct State_530{
-	uint64_t ChassisDriverEnSta:1;
-	uint64_t ChassisDiverSlopover:1;
-	uint64_t ChassisDriverModeSta:2;
-	uint64_t ChassisGearFb:2;
-	uint64_t kong1:2;
-	uint64_t ChassisSpeedFb:16;
-	uint64_t ChassisThrottlePaldFb:10;
+	uint64_t ChassisDriverEnSta:1;//驱动使能状态
+	uint64_t ChassisDiverSlopover:1;//驱动控制越界提醒
+	uint64_t ChassisDriverModeSta:2;//驱动模式反馈
+	uint64_t ChassisGearFb:2;//档位反馈 1d 2n 3r
+	uint64_t kong1:2;//占位
+	uint64_t ChassisSpeedFb:16;//车速反馈
+	uint64_t ChassisThrottlePaldFb:10;//油门请求反馈
+};
+
+struct State_531{
+	uint64_t ChassisBrakeEnSta:1;//制动使能状态
+	uint64_t VehicleBrakeLampFb:1;//制动灯状态反馈
+	uint64_t ChassisEpbFb:2;//驻车状态
+	uint64_t kong:5;//占位
+	uint64_t ChassisBrakePedalValFb:10;//制动踏板踩下实际反馈
+	uint64_t kong1:6;//占位
+	uint64_t ChassisBrakePressureFb:8;//制动压力实际反馈
+};
+
+struct State_532{
+	uint64_t ChassisSteerEnSta:1;//转向使能状态
+	uint64_t ChassisSteerSlopover:1;//转向控制越界提醒
+	uint64_t ChassisSteerModeFb:4;//转向模式反馈
+	uint64_t kong:2;//占位
+	uint64_t ChassisSteerAngleFb:16;//前转向方向盘转角反馈
+	uint64_t ChassisSteerAngleRearFb:16;//后转向方向盘转角反馈
+	uint64_t ChassisSteerAngleSpeedFb:8;//设置的转向转角速度反馈
+};
+
+struct State_534{
+	uint64_t DrivingModeFb:2;//驾驶模式反馈
+	uint64_t ChassisPowerStaFb:2;//车辆上电状态反馈
+	uint64_t ChassisPowerDcSta:2;//DC工作状态
+	uint64_t kong:2;
+	uint64_t ChassisSpeedLimitedModeFb:1;//车辆限速状态
+	uint64_t kong1:7;
+	uint64_t ChassisSpeedLimitedValFb:16;//车辆限速值反馈
+	uint64_t ChassisLowPowerVoltSta:8;//低压蓄电池电压
+	uint64_t ChassisEStopStaFb:4;//紧急停车状态反馈
+	uint64_t CrashFrontSta:1;  //车辆前碰撞传感器反馈
+	uint64_t CrashRearSta:1;  //车辆后碰撞传感器反馈
+	uint64_t kong2:2;
+	uint64_t Life:4;  //VCU循环计数
+	uint64_t CheckSum:8;  //校验
+
+};
+
+struct State_535{
+	uint64_t ChassisBmsReserved:4;//预留
+	uint64_t ChassisPowerChargeSta:2;//车辆充电状态
+	uint64_t ChassisPowerChargeSockSta:1;//充电枪连接状态
+	uint64_t kong:1;
+	uint64_t ChassisPowerSocFb:8;//车辆动力电池电量
+	uint64_t ChassisPowerVoltFb:16;//车辆动力电池电压
+	uint64_t ChassisPowerCurrFb:16;//车辆动力电池电流
+	uint64_t ChassisBmsMaxTemp:8;//BMS最高单体温度
+	uint64_t ChassisBmsReserved1:8; //预留
+
 };
 
 struct State_540 {
@@ -173,6 +225,10 @@ struct Ctrl_131 ctrl_131;
 struct Ctrl_132 ctrl_132;
 struct Ctrl_140 ctrl_140;
 struct State_530 state_530;
+struct State_531 state_531;
+struct State_532 state_532;
+struct State_534 state_534;
+struct State_535 state_535;
 struct State_540 state_540;
 
 void can_init(); 
@@ -198,7 +254,7 @@ void *receive_func(void* param)
 			for(j=0;j<reclen;j++)
 			{
 
-
+				mtx_ptr.lock();
 				//rec[j].ID;//ID
 				switch(rec[j].ID)
 				{
@@ -221,11 +277,48 @@ void *receive_func(void* param)
 					}
 
 					break;
+				case 0x531:
+					buff_ptr=(unsigned char *)&state_531;
+					for(i = 0; i < rec[j].DataLen; i++)
+					{
+						*buff_ptr=rec[j].Data[i];
+						buff_ptr++;
+					}
+
+					break;
+				case 0x532:
+					buff_ptr=(unsigned char *)&state_532;
+					for(i = 0; i < rec[j].DataLen; i++)
+					{
+						*buff_ptr=rec[j].Data[i];
+						buff_ptr++;
+					}
+
+					break;
+				case 0x534:
+					buff_ptr=(unsigned char *)&state_534;
+					for(i = 0; i < rec[j].DataLen; i++)
+					{
+						*buff_ptr=rec[j].Data[i];
+						buff_ptr++;
+					}
+
+					break;
+				case 0x535:
+					buff_ptr=(unsigned char *)&state_535;
+					for(i = 0; i < rec[j].DataLen; i++)
+					{
+						*buff_ptr=rec[j].Data[i];
+						buff_ptr++;
+					}
+
+					break;
 
 				 default:
 		            std::cout << "no find id." << rec[j].ID<<std::endl;
 		            break;
 				}
+				mtx_ptr.unlock();
 			}
 			
 		}	
@@ -349,9 +442,10 @@ void  Gear_cmd_callback(const autoware_auto_vehicle_msgs::msg::GearCommand::Shar
 		return ;
 	}
 
+
 	if (Gear_data!=4)
 	{
-	mtx_130.lock();
+	
 	ctrl_130.GearCtrl=Gear_data;
 	ctrl_131.BrakePdlTarget=30;//分辨率0.1
 	ctrl_131.EpbCtrl=1;
