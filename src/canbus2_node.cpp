@@ -37,41 +37,51 @@ VCI_CAN_OBJ canbus_Ctrl_131[1];
 VCI_CAN_OBJ canbus_Ctrl_132[1];
 VCI_CAN_OBJ canbus_Ctrl_140[1];
 struct Ctrl_130 {
-    uint64_t DriverEnCtrl : 1;//加速使能
-	uint64_t kong1 :1;//占位
-	uint64_t DriverModeCtrl : 2;//驱动模式控制 0速度 1油门
- 	uint64_t GearCtrl : 4;//档位
-	uint64_t SpeedCtrl : 16;//速度控制
-	uint64_t ThrottlePdlTarget : 10;//油门控制
-	uint64_t kong2 :14;//占位
-	uint64_t DriveLifeSig : 4;//循环计数
-	uint64_t kong3 : 4;//占位
-	uint64_t CheckSum_130 :8;//校验
+    uint64_t DriverEnCtrl : 1;        //加速使能
+	uint64_t kong1 :1;                //占位
+	uint64_t DriverModeCtrl : 2;      //驱动模式控制 0速度 1油门
+ 	uint64_t GearCtrl : 4;            //档位
+	uint64_t SpeedCtrl : 16;          //速度控制
+	uint64_t ThrottlePdlTarget : 10;  //油门控制
+	uint64_t kong2 :14;               //占位
+	uint64_t DriveLifeSig : 4;        //循环计数
+	uint64_t kong3 : 4;               //占位
+	uint64_t CheckSum_130 :8;         //校验
 };
 struct Ctrl_131 {
-    uint64_t BrakeEn : 1;//刹车使能
-	uint64_t kong :3; //占位
-	uint64_t AebCtrl : 1;//aeb使能
-	uint64_t kong2 :3;//占位
-	uint64_t BrakePdlTarget : 10;//刹车控制0～100 0.1分辨率
-	uint64_t kong3 : 6 ;//占位
-	uint64_t EpbCtrl :2;//驻车控制 0默认 1刹车 2 释放
-	uint64_t kong4 : 22;//占位
-	uint64_t LifeSig : 4;//循环计数
-	uint64_t kong5 : 4;//占位
-	uint64_t CheckSum_131  : 8;//校验
+    uint64_t BrakeEn : 1;             //刹车使能
+	uint64_t kong :3;                 //占位
+	uint64_t AebCtrl : 1;             //aeb使能
+	uint64_t kong2 :3;                //占位
+	uint64_t BrakePdlTarget : 10;     //刹车控制0～100 0.1分辨率
+	uint64_t kong3 : 6 ;              //占位
+	uint64_t EpbCtrl :2;              //驻车控制 0默认 1刹车 2 释放
+	uint64_t kong4 : 22;              //占位
+	uint64_t LifeSig : 4;             //循环计数
+	uint64_t kong5 : 4;               //占位
+	uint64_t CheckSum_131  : 8;       //校验
 
 };
 
 struct Ctrl_132 {
-    uint64_t SteerEnCtrl : 1;//转向使能
-	uint64_t kong :3;//占位
-	uint64_t SteerModeCtrl : 4;//转向模式控制
-	uint64_t SteerAngleTarget : 16;//转向控制前
-	uint64_t SteerAngleRearTarget : 16 ;//转向控制后
-	uint64_t SteerAngleSpeedCtrl :8;//方向盘角度控制
-	uint64_t kong1 :8;//占位
-	uint64_t CheckSum_132 : 8;//校验
+    uint64_t SteerEnCtrl : 1;         //转向使能
+	uint64_t kong :3;                 //占位
+	uint64_t SteerModeCtrl : 4;       //转向模式控制
+	uint64_t SteerAngleTarget : 16;   //转向控制前
+	uint64_t SteerAngleRearTarget:16; //转向控制后
+	uint64_t SteerAngleSpeedCtrl :8;  //方向盘角度控制
+	uint64_t kong1 :8;                //占位
+	uint64_t CheckSum_132 : 8;        //校验
+
+};
+struct Ctrl_133 {
+    uint64_t kong : 24;//占位
+	uint64_t ChassisSpeedLimiteMode :3;//限速控制  0:default  1:limit
+	uint64_t ChassisSpeedLimiteVal : 4;//速度限制值  1-20 m/s
+	uint64_t CheckSumEn : 16;//校验模式使能(预留)
+};
+struct Ctrl_13A {
+	uint64_t kong;
 
 };
 
@@ -120,16 +130,16 @@ struct State_530{
 	uint64_t ChassisDriverModeSta:2;//驱动模式反馈
 	uint64_t ChassisGearFb:2;//档位反馈 1d 2n 3r
 	uint64_t kong1:2;//占位
-	uint64_t ChassisSpeedFb:16;//车速反馈
-	uint64_t ChassisThrottlePaldFb:10;//油门请求反馈
-};
+	uint64_t ChassisSpeedFb:16;//车速反馈     0.01
+	uint64_t ChassisThrottlePaldFb:10;//油门请求反馈    0.1
+ };
 
 struct State_531{
 	uint64_t ChassisBrakeEnSta:1;//制动使能状态
 	uint64_t VehicleBrakeLampFb:1;//制动灯状态反馈
 	uint64_t ChassisEpbFb:2;//驻车状态
 	uint64_t kong:5;//占位
-	uint64_t ChassisBrakePedalValFb:10;//制动踏板踩下实际反馈
+	uint64_t ChassisBrakePedalValFb:10;//制动踏板踩下实际反馈  0.1
 	uint64_t kong1:6;//占位
 	uint64_t ChassisBrakePressureFb:8;//制动压力实际反馈
 };
@@ -141,7 +151,7 @@ struct State_532{
 	uint64_t kong:2;//占位
 	uint64_t ChassisSteerAngleFb:16;//前转向方向盘转角反馈
 	uint64_t ChassisSteerAngleRearFb:16;//后转向方向盘转角反馈
-	uint64_t ChassisSteerAngleSpeedFb:8;//设置的转向转角速度反馈
+	uint64_t ChassisSteerAngleSpeedFb:8;//设置的转向转角速度反馈     2
 };
 
 struct State_534{
@@ -151,8 +161,8 @@ struct State_534{
 	uint64_t kong:2;
 	uint64_t ChassisSpeedLimitedModeFb:1;//车辆限速状态
 	uint64_t kong1:7;
-	uint64_t ChassisSpeedLimitedValFb:16;//车辆限速值反馈
-	uint64_t ChassisLowPowerVoltSta:8;//低压蓄电池电压
+	uint64_t ChassisSpeedLimitedValFb:16;//车辆限速值反馈      0.1
+	uint64_t ChassisLowPowerVoltSta:8;//低压蓄电池电压         0.1
 	uint64_t ChassisEStopStaFb:4;//紧急停车状态反馈
 	uint64_t CrashFrontSta:1;  //车辆前碰撞传感器反馈
 	uint64_t CrashRearSta:1;  //车辆后碰撞传感器反馈
@@ -168,56 +178,89 @@ struct State_535{
 	uint64_t ChassisPowerChargeSockSta:1;//充电枪连接状态
 	uint64_t kong:1;
 	uint64_t ChassisPowerSocFb:8;//车辆动力电池电量
-	uint64_t ChassisPowerVoltFb:16;//车辆动力电池电压
-	uint64_t ChassisPowerCurrFb:16;//车辆动力电池电流
+	uint64_t ChassisPowerVoltFb:16;//车辆动力电池电压    分辨率0.1
+	uint64_t ChassisPowerCurrFb:16;//车辆动力电池电流    分辨率0.1
 	uint64_t ChassisBmsMaxTemp:8;//BMS最高单体温度
 	uint64_t ChassisBmsReserved1:8; //预留
 
 };
 
-struct State_540 {
-    uint64_t WorkEnableFb : 1;
-    uint64_t SweepModeFb :2;
-    uint64_t FanModeFb :2;
-    uint64_t VehicleCtrlModeFb : 2;
-    uint64_t CtrlEnableFb : 1;
-    uint64_t VehiclePosLampFb : 1;
-    uint64_t VehicleHeadLampFb :1;
-    uint64_t VehicleLeftLampFb :1;
-    uint64_t VehicleRightLampFb :1;
-    uint64_t VehicleHighBeamFb:1;
-    uint64_t VehicleFogLampFb:1;
-    uint64_t VehicleHazardWarLampFb :1;
-    uint64_t VehicleFrontHornFb :1;
-    uint64_t VehicleWorkLampFb:1;
-    uint64_t VehicleWiperFb :2;
-    uint64_t GarbageONFb :1;
-    uint64_t GarbageWashingFb :1;
-    uint64_t WashGunFb :1;
-    uint64_t BackdoorInplace :1;
-    uint64_t kong_1: 1;
-    uint64_t BackdoorFb :2;
-    uint64_t GarbageFb :2;
-    uint64_t KeyStatusFb :2;
-    uint64_t ControlModeFb :2;
-    uint64_t VehicleEmergency :1;
-    uint64_t NozzleStatusFb :1;
-    uint64_t SweepWaterSprayFb :1;
-    uint64_t ArrowLightFb:1;
-    uint64_t kong_2:2;
-    uint64_t AlarmBuzzerFb : 1;
-    uint64_t WaterStatusFb :1; 
-    uint64_t FaultStatus :8; 
-    uint64_t DustVibrtionStatusFb :1;
-    uint64_t DryWetModeStatusFb :1;
-    uint64_t UnloadingStatusFb :1;
-    uint64_t SweepDebugModeFb:1;
-    uint64_t FanDebugModeFb:1;
-    uint64_t DustbinOverflowStatusFb :1;
-    uint64_t kong_3 :2;
-    uint64_t Life0 :8;
+struct State_539{
+	uint64_t ChassisWheelRpmLf:16;//左前轮转速
+	uint64_t ChassisWheelRpmRf:16;//右前轮转速
+	uint64_t ChassisWheelRpmLr:16;//左后轮转速
+	uint64_t ChassisWheelRpmRr:16;//右后轮转速
 
 };
+
+struct State_53A{
+	uint64_t VehicleODO:16;//总里程
+	uint64_t VehicleTrip:16;//单次里程(每次下电清零) 分辨率0.01
+	uint64_t kong :32;//占位
+};
+
+struct State_540 {
+    uint64_t WorkEnableFb : 1;			//上装工作使能状态反馈
+    uint64_t SweepModeFb :2;			//扫盘模式状态反馈
+    uint64_t FanModeFb :2;				//风机模式状态反馈
+    uint64_t VehicleCtrlModeFb : 2;		//车辆控制模式状态反馈
+    uint64_t CtrlEnableFb : 1;          //上装控制使能反馈
+    uint64_t VehiclePosLampFb : 1;      // 位置灯状态反馈
+    uint64_t VehicleHeadLampFb :1;      //近光灯状态反馈
+    uint64_t VehicleLeftLampFb :1;      //左转向灯状态反馈
+    uint64_t VehicleRightLampFb :1;     //右转向灯状态反馈
+    uint64_t VehicleHighBeamFb:1;       //远光灯状态反馈
+    uint64_t VehicleFogLampFb:1;        //雾灯状态反馈
+    uint64_t VehicleHazardWarLampFb :1; // 危险警示灯开关状态
+    uint64_t VehicleFrontHornFb :1;     //前喇叭状态反馈
+    uint64_t VehicleWorkLampFb:1;       //作业警示灯状态反馈
+    uint64_t VehicleWiperFb :2;         //雨刮状态反馈
+    uint64_t GarbageONFb :1;            //上装箱体下降到位状态反馈
+    uint64_t GarbageWashingFb :1;       //上装箱体清洗状态
+    uint64_t WashGunFb :1;              //上装洗车枪状态反馈
+    uint64_t BackdoorInplace :1;        //上装后门关闭到位状态反馈
+    uint64_t kong_1: 1;                 //占位 
+    uint64_t BackdoorFb :2;             //上装后门状态反馈
+    uint64_t GarbageFb :2;              //上装箱体状态反馈
+    uint64_t KeyStatusFb :2;            //车辆钥匙开关状态反馈
+    uint64_t ControlModeFb :2;          //底盘控制模式反馈
+    uint64_t VehicleEmergency :1;       //整车急停状态反馈
+    uint64_t NozzleStatusFb :1;         //上装吸嘴挡板状态反馈
+    uint64_t SweepWaterSprayFb :1;      //上装扫盘喷水状态反馈
+    uint64_t ArrowLightFb:1;            //箭头灯状态反馈
+    uint64_t kong_2:2;                  //占位 
+    uint64_t AlarmBuzzerFb : 1;         //报警蜂鸣器状态反馈
+    uint64_t WaterStatusFb :1;          //清水箱水位状态反馈
+    uint64_t FaultStatus :8;            //上装故障状态
+    uint64_t DustVibrtionStatusFb :1;   //机械振尘状态反馈
+    uint64_t DryWetModeStatusFb :1;     //干湿扫模式状态反馈
+    uint64_t UnloadingStatusFb :1;      //上装一键卸料状态反馈
+    uint64_t SweepDebugModeFb:1;        //上装扫盘调试模式状态反馈
+    uint64_t FanDebugModeFb:1;          //上装风机调试模式状态反馈
+    uint64_t DustbinOverflowStatusFb :1;//上装垃圾箱满溢状态反馈
+    uint64_t kong_3 :2;                 //占位
+    uint64_t Life0 :8;                  //福龙马计数器0
+
+};
+
+struct State_541{
+	uint64_t OilPump_VoltageIn:16;//油泵控制器输入电压
+	uint64_t OilPump_VoltageOut:16;//油泵控制器输出电压
+	uint64_t OilPump_CurrentOut:16;//油泵控制器输出电流
+	uint64_t OilPump_Status:8;//油泵控制器状态
+	uint64_t OilPump_Life:8;//油泵控制器心跳信号1
+};
+
+struct State_542{
+	uint64_t OilPump_Speed:16;//油泵转速
+	uint64_t OilPump_MotorTemp:8;//油泵电机温度
+	uint64_t OilPump_ControllerTemp:8;//油泵控制器温度
+	uint64_t OilPump_Alarm:8;//油泵控制器报警信息
+	uint64_t OilPump_Fault:8;//油泵控制器故障代码
+	uint64_t kong:8;//占位
+	uint64_t OilPump_Life:8;//油泵控制器心跳信号2
+};
+
 
 
 struct Ctrl_130 ctrl_130;
@@ -229,6 +272,8 @@ struct State_531 state_531;
 struct State_532 state_532;
 struct State_534 state_534;
 struct State_535 state_535;
+struct State_539 state_539;
+struct State_53A state_53A;
 struct State_540 state_540;
 
 void can_init(); 
@@ -313,7 +358,25 @@ void *receive_func(void* param)
 					}
 
 					break;
+				case 0x539:
+					buff_ptr=(unsigned char *)&state_539;
+					for(i = 0; i < rec[j].DataLen; i++)
+					{
+						*buff_ptr=rec[j].Data[i];
+						buff_ptr++;
+					}
 
+					break;
+
+				case 0x53A:
+					buff_ptr=(unsigned char *)&state_53A;
+					for(i = 0; i < rec[j].DataLen; i++)
+					{
+						*buff_ptr=rec[j].Data[i];
+						buff_ptr++;
+					}
+
+					break;
 				 default:
 		            std::cout << "no find id." << rec[j].ID<<std::endl;
 		            break;
