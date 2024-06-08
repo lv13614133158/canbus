@@ -11,9 +11,10 @@ set_target_properties(libcontrolcan PROPERTIES IMPORTED_LOCATION ${PROJECT_SOURC
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(ament_cmake REQUIRED)
-find_package(autoware_auto_control_msgs REQUIRED)
+find_package(autoware_control_msgs REQUIRED)
 find_package(builtin_interfaces REQUIRED)
 find_package(autoware_auto_vehicle_msgs REQUIRED)
+find_package(autoware_vehicle_msgs REQUIRED)
 find_package(tier4_vehicle_msgs REQUIRED)
 include_directories(include)
 
@@ -21,7 +22,7 @@ add_executable(canbus_node src/canbus2_node.cpp)
 
 
 target_link_libraries(canbus_node libcontrolcan)
-ament_target_dependencies(canbus_node rclcpp std_msgs autoware_auto_control_msgs builtin_interfaces autoware_auto_vehicle_msgs tier4_vehicle_msgs)
+ament_target_dependencies(canbus_node rclcpp std_msgs autoware_control_msgs builtin_interfaces autoware_auto_vehicle_msgs tier4_vehicle_msgs autoware_vehicle_msgs)
 
 
 
