@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+  
+ 
+  <node pkg="canbus" exec="canbus_node" name="canbus" output="both">
+   </node>
+
+</launch>
+

@@ -16,13 +16,17 @@ find_package(builtin_interfaces REQUIRED)
 find_package(autoware_auto_vehicle_msgs REQUIRED)
 find_package(autoware_vehicle_msgs REQUIRED)
 find_package(tier4_vehicle_msgs REQUIRED)
+find_package(autoware_adapi_v1_msgs REQUIRED)
+find_package(websocket_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
 include_directories(include)
+
 
 add_executable(canbus_node src/canbus2_node.cpp)
 
 
 target_link_libraries(canbus_node libcontrolcan)
-ament_target_dependencies(canbus_node rclcpp std_msgs autoware_control_msgs builtin_interfaces autoware_auto_vehicle_msgs tier4_vehicle_msgs autoware_vehicle_msgs)
+ament_target_dependencies(canbus_node rclcpp std_msgs autoware_control_msgs builtin_interfaces autoware_auto_vehicle_msgs tier4_vehicle_msgs autoware_vehicle_msgs autoware_adapi_v1_msgs websocket_msgs sensor_msgs)
 
 
 
@@ -37,5 +41,14 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
 endif()
+
+install(DIRECTORY launch/
+  DESTINATION share/${PROJECT_NAME}/launch
+)
+install(
+  DIRECTORY config
+  DESTINATION share/${PROJECT_NAME}
+)
+
 
 ament_package()
