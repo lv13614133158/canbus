@@ -19,6 +19,7 @@ find_package(tier4_vehicle_msgs REQUIRED)
 find_package(autoware_adapi_v1_msgs REQUIRED)
 find_package(websocket_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(visualization_msgs REQUIRED)
 include_directories(include)
 
 
@@ -26,7 +27,7 @@ add_executable(canbus_node src/canbus2_node.cpp)
 
 
 target_link_libraries(canbus_node libcontrolcan)
-ament_target_dependencies(canbus_node rclcpp std_msgs autoware_control_msgs builtin_interfaces autoware_auto_vehicle_msgs tier4_vehicle_msgs autoware_vehicle_msgs autoware_adapi_v1_msgs websocket_msgs sensor_msgs)
+ament_target_dependencies(canbus_node rclcpp std_msgs autoware_control_msgs builtin_interfaces autoware_auto_vehicle_msgs tier4_vehicle_msgs autoware_vehicle_msgs autoware_adapi_v1_msgs websocket_msgs sensor_msgs visualization_msgs)
 
 
 

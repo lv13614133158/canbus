@@ -36,7 +36,7 @@
 #include "autoware_vehicle_msgs/msg/hazard_lights_command.hpp"
 #include "autoware_adapi_v1_msgs/msg/operation_mode_state.hpp"
 #include "sensor_msgs/msg/nav_sat_fix.hpp"
-
+#include <visualization_msgs/msg/marker.hpp>
 
 rclcpp::Publisher<tier4_vehicle_msgs::msg::BatteryStatus>::SharedPtr battery_charge_pub;
 rclcpp::Publisher<autoware_vehicle_msgs::msg::ControlModeReport>::SharedPtr control_mode_pub;
@@ -46,7 +46,7 @@ rclcpp::Publisher<autoware_vehicle_msgs::msg::TurnIndicatorsReport>::SharedPtr t
 rclcpp::Publisher<autoware_vehicle_msgs::msg::SteeringReport>::SharedPtr steering_status_pub;
 rclcpp::Publisher<autoware_vehicle_msgs::msg::VelocityReport>::SharedPtr velocity_Status_pub;
 rclcpp::Publisher<websocket_msgs::msg::Websocket>::SharedPtr websocket_pub;
-
+rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr marker_pub;
 
 VCI_BOARD_INFO pInfo;//用来获取设备信息。
 int count=0;//数据列表中，用来存储列表序号。
@@ -66,6 +66,7 @@ std::mutex mtx_131;
 std::mutex mtx_132;
 std::mutex mtx_140;
 std::mutex mtx_ptr;
+std::mutex mtx_408;
 
 VCI_CAN_OBJ canbus_Ctrl_130[1];
 VCI_CAN_OBJ canbus_Ctrl_131[1];
@@ -350,6 +351,97 @@ struct State_548{
 	uint64_t Life8:8;//
 };
 
+struct State_60A{
+    uint64_t Object_NofObjects:8;
+    uint64_t Object_MeasCounter1:8;
+    uint64_t Object_MeasCounter2:8;
+    uint64_t Reserved:4;
+    uint64_t Object_InterfaceVersion:4;
+  };
+struct State_60B{
+    uint64_t Object_ID:8;
+    uint64_t Object_DistLong1:8;
+    uint64_t Object_DistLat1:3;
+    uint64_t Object_DistLong2:5;
+    uint64_t Object_DistLat2:8;
+    uint64_t Object_VrelLong1:8;
+    uint64_t Object_VrelLat1:6;
+    uint64_t Object_VrelLong2:2;
+    uint64_t Object_DynProp:3;
+    uint64_t Reserved:2;
+    uint64_t Object_VrelLat2:3;
+    uint64_t Object_RCS:8;
+  };
+struct State_60C{
+    uint64_t Object_ID:8;
+    uint64_t Obj_DistLat_rms1:3;
+    uint64_t Obj_DistLong_rms:5;
+    uint64_t Obj_VrelLat_rms1:1;
+    uint64_t Obj_VrelLong_rms:5;
+    uint64_t Obj_DistLat_rms2:2;
+    uint64_t Obj_ArelLong_rms1:4;
+    uint64_t Obj_VrelLat_rms2:4;
+    uint64_t Obj_Orientation_rms1:2;
+    uint64_t Obj_ArelLat_rms:5;
+    uint64_t Obj_ArelLong_rms2:1;
+    uint64_t Reserved1:5;
+    uint64_t Obj_Orientation_rms2:3;
+    uint64_t Reserved2:2;
+    uint64_t Obj_MeasState:3;
+    uint64_t Obj_ProbOfExist:3;
+  };
+struct State_60D{
+    uint64_t Object_ID:8;
+    uint64_t Object_ArelLong1:8;
+    uint64_t Object_ArelLat1:5;
+    uint64_t Object_ArelLong2:3;
+    uint64_t Object_Class:3;
+    uint64_t Reserved:1;
+    uint64_t Object_ArelLat2:4;
+    uint64_t Object_OrientationAngle1:8;
+    uint64_t Reserved2:6;
+    uint64_t Object_OrientationAngle2:2;
+    uint64_t Object_Length:8;
+    uint64_t Object_Width:8;
+  };
+struct ARS_408_Data
+{
+	//0b
+	int object_id;
+	double long_dist;
+	double lat_dist;
+	double long_rel_vel;
+	int dyn_prop;
+	double lat_rel_vel;
+	double object_rcs;
+	//0c
+	double long_dist_rms;
+	double long_rel_vel_rms;
+	double lat_dist_rms;
+	double lat_rel_vel_rms;
+	double long_rel_accel_rms;
+	double lat_rel_accel_rms;
+	double orientation_rms;
+	int meas_state;
+	std::string prob_of_exist;
+	//0d
+	double long_rel_accel;
+	double lat_rel_accel;
+	std::string object_class;
+	double orientation_angle;
+	double length;
+	double width;
+
+};
+struct ARS_408
+{
+	int objects_number; //id
+	int measurement_cycle_counter; 
+	int interface_version;
+	std::map<int, struct ARS_408_Data> data;
+	std::list<int> objects_id;
+	//struct ARS_408_Data data[100];
+};
 
 struct Ctrl_130 ctrl_130;
 struct Ctrl_131 ctrl_131;
@@ -368,6 +460,12 @@ struct State_543 state_543;
 struct State_548 state_548;
 struct State_53A state_53A;
 struct State_53B state_53B;
+
+struct State_60A state_60A;
+struct State_60B state_60B;
+struct State_60C state_60C;
+struct State_60D state_60D;
+struct ARS_408 ars_408;
  static bool outOfChina(double lat, double lon)
 {
     if (lon < 72.004 || lon > 137.8347)
@@ -605,9 +703,10 @@ void *recv2_func(void* param)
 	int i,j;
 	
 	int *run=(int*)param;//线程启动，退出控制。
-	//unsigned char buff[8]={0};
-	
-	
+	//unsigned char buff[8]={0
+	unsigned char *buff_ptr;
+	std::string ProbOfExis;
+	std::string  object_class;
 	while((*run)&0x0f)
 	{
 		if((reclen=VCI_Receive(VCI_USBCAN2,0,1,rec,3000,100))>0)//调用接收函数，如果有数据，进行数据处理显示。
@@ -616,22 +715,248 @@ void *recv2_func(void* param)
 			for(j=0;j<reclen;j++)
 			{
 
-					printf("CAN%d RX ID:0x%08X", 1, rec[j].ID);//ID
-					if(rec[j].ExternFlag==0) printf(" Standard ");//帧格式：标准帧
-					if(rec[j].ExternFlag==1) printf(" Extend   ");//帧格式：扩展帧
-					if(rec[j].RemoteFlag==0) printf(" Data   ");//帧类型：数据帧
-					if(rec[j].RemoteFlag==1) printf(" Remote ");//帧类型：远程帧
-					printf("DLC:0x%02X",rec[j].DataLen);//帧长度
-					printf(" data:0x");	//数据
+			// 		printf("CAN%d RX ID:0x%08X", 1, rec[j].ID);//ID
+			// 		if(rec[j].ExternFlag==0) printf(" Standard ");//帧格式：标准帧
+			// 		if(rec[j].ExternFlag==1) printf(" Extend   ");//帧格式：扩展帧
+			// 		if(rec[j].RemoteFlag==0) printf(" Data   ");//帧类型：数据帧
+			// 		if(rec[j].RemoteFlag==1) printf(" Remote ");//帧类型：远程帧
+			// 		printf("DLC:0x%02X",rec[j].DataLen);//帧长度
+			// 		printf(" data:0x");	//数据
+			// 		for(i = 0; i < rec[j].DataLen; i++)
+			// 		{
+			// 			printf(" %02X", rec[j].Data[i]);
+			// 		}
+			//  		printf(" TimeStamp:0x%08X",rec[j].TimeStamp);//时间标识。
+			// 		printf("\n");
+					
+			
+			switch(rec[j].ID)
+				{
+				case 0x60A:
+					mtx_408.lock();
+					buff_ptr=(unsigned char *)&state_60A;
 					for(i = 0; i < rec[j].DataLen; i++)
 					{
-						printf(" %02X", rec[j].Data[i]);
+						*buff_ptr=rec[j].Data[i];
+						buff_ptr++;
 					}
-					printf(" TimeStamp:0x%08X",rec[j].TimeStamp);//时间标识。
-					printf("\n");
+				
+				
+					//std::cout<<"0x60A ::"<<std::endl;
+					//std::cout <<" NofObjects == "<<ars_408.objects_number<<std::endl;
+					//id
+					//std::cout<<" MeasCounter == "<<ars_408.measurement_cycle_counter<<std::endl;
+					//取测量周期计数，从传感器启动开始向上计数，当 > 65535 时从 0 重新开始
+					//std::cout<<" InterfaceVersion =="<<ars_408.interface_version<<std::endl;
+					//CAN 接口版本号。在未更改Object标识符之前，它始终为“1”。
+					
+					 if (!ars_408.objects_id.empty())
+					{
+						ars_408.objects_id.sort();
+						
+						 for (auto i :ars_408.objects_id)
+						 {
+							std::cout<<" i == "<< i<<std::endl;
+							std::cout<<"--------------------------------------------------------------------"<<std::endl;
+							std::cout<<" id == "<<ars_408.data[i].object_id<<std::endl;
+							std::cout<<" long_dist == "<<ars_408.data[i].long_dist<<std::endl;
+							std::cout<<" lat_dist == "<<ars_408.data[i].lat_dist<<std::endl;
+							std::cout<<" long_rel_vel == "<<ars_408.data[i].long_rel_vel<<std::endl;
+							std::cout<<" dyn_prop == "<<ars_408.data[i].dyn_prop<<std::endl;
+							std::cout<<" long_rel_vel == "<<ars_408.data[i].long_rel_vel<<std::endl;
+							std::cout<<" lat_rel_vel == "<<ars_408.data[i].lat_rel_vel<<std::endl;
+							std::cout<<" object_rcs == "<<ars_408.data[i].object_rcs<<std::endl;
+							std::cout<<" long_dist_rms == "<<ars_408.data[i].long_dist_rms<<std::endl;
+							std::cout<<" long_rel_vel_rms == "<<ars_408.data[i].long_rel_vel_rms<<std::endl;
+							std::cout<<" lat_dist_rms == "<<ars_408.data[i].lat_dist_rms<<std::endl;
+							std::cout<<" lat_rel_vel_rms == "<<ars_408.data[i].lat_rel_vel_rms<<std::endl;
+							std::cout<<" long_rel_accel_rms == "<<ars_408.data[i].long_rel_accel_rms<<std::endl;
+							std::cout<<" lat_rel_accel_rms == "<<ars_408.data[i].lat_rel_accel_rms<<std::endl;
+							std::cout<<" orientation_rms == "<<ars_408.data[i].orientation_rms<<std::endl;
+							std::cout<<" meas_state == "<<ars_408.data[i].meas_state<<std::endl;
+							std::cout<<" prob_of_exist == "<<ars_408.data[i].prob_of_exist<<std::endl;
+							std::cout<<" long_rel_accel == "<<ars_408.data[i].long_rel_accel<<std::endl;
+							std::cout<<" lat_rel_accel == "<<ars_408.data[i].lat_rel_accel<<std::endl;
+							std::cout<<" object_class == "<<ars_408.data[i].object_class<<std::endl;
+							std::cout<<" orientation_angle == "<<ars_408.data[i].orientation_angle<<std::endl;
+							std::cout<<" length == "<<ars_408.data[i].length<<std::endl;
+							std::cout<<" width == "<<ars_408.data[i].width<<std::endl;
+							std::cout<<"--------------------------------------------------------------------"<<std::endl;
+							std::cout<<""<<std::endl;
+							std::cout<<""<<std::endl;
 
+							visualization_msgs::msg::Marker marker; 
+							marker.header.frame_id = "/my_marker";
+               				rclcpp::Clock::SharedPtr clock = rclcpp::Clock::make_shared();
+    						marker.header.stamp = clock->now();
+               				marker.ns = ars_408.data[i].prob_of_exist;
+                			marker.id = ars_408.data[i].object_id;
+                			marker.type = visualization_msgs::msg::Marker::CUBE;
+                			marker.action = visualization_msgs::msg::Marker::ADD;
+                			marker.pose.position.x = ars_408.data[i].long_dist;
+			                marker.pose.position.y = ars_408.data[i].lat_dist;
+			                marker.pose.position.z = 1;
+			                marker.pose.orientation.x = 0.01;
+			                marker.pose.orientation.y = 0.01;
+			                marker.pose.orientation.z = 0.01;
+			                marker.pose.orientation.w = 0.01;
+			                marker.scale.x = ars_408.data[i].length;
+			                marker.scale.y = ars_408.data[i].width;
+			                marker.scale.z = 0.1;
+			                //设定颜色----- 确保将  alpha  设置为非零值
+			                marker.color.r = 0.0f;
+			                marker.color.g = 1.0f;
+			                marker.color.b = 0.0f;
+			                marker.color.a = 1;
 
+			               
+    						marker.lifetime = rclcpp::Duration::from_seconds(0.1);
+			                marker_pub->publish(marker);
+						 }
+					 std::cout<<"---------------------------0x60A------------------------------------"<<std::endl;
+					 std::cout<<""<<std::endl;
+					 std::cout<<""<<std::endl;
+					 
+					}
+						
+					
+					ars_408.objects_number=state_60A.Object_NofObjects;
+					ars_408.measurement_cycle_counter=(state_60A.Object_MeasCounter1<<8 |state_60A.Object_MeasCounter2);
+					ars_408.interface_version=state_60A.Object_InterfaceVersion;
+					ars_408.objects_id.clear();
+					std::cout<<"---------------------------0x60A-----------"<<ars_408.objects_number<<"-------------------------"<<std::endl;
+					mtx_408.unlock();
+					break;
+				case 0x60B:
+					buff_ptr=(unsigned char *)&state_60B;
+					for(i = 0; i < rec[j].DataLen; i++)
+					{
+						*buff_ptr=rec[j].Data[i];
+						buff_ptr++;
+					}
+					//std::cout<<"0x60B ::"<<std::endl;
+					//std::cout<<" 0x60B id == "<<state_60B.Object_ID<<std::endl;
+					//id
+					//std::cout<<" object_long_dist == "<<(state_60B.Object_DistLong1<<5|state_60B.Object_DistLong2) * 0.2 - 500.0<<std::endl;
+					//Longitudinal(x)坐标	单位：m
+					//std::cout<<" object_lat_dist == "<<(state_60B.Object_DistLat1<<8|state_60B.Object_DistLat2)* 0.2 - 204.6<<std::endl;
+					//获取Lateral(y)坐标	单位：m
+					//std::cout<<" object_long_rel_vel == "<<(state_60B.Object_VrelLong1<<2|state_60B.Object_VrelLong2)* 0.25 - 128.0<<std::endl;
+					//获取Longitudinal(x)方向相对速度	单位：m/s
+					//std::cout<<" object_lat_rel_vel == "<<(state_60B.Object_VrelLat1<<3|state_60B.Object_VrelLat2)* 0.25 - 64.0<<std::endl;
+					//获取Lateral(y)方向相对速度	单位：m/s
+					//std::cout<<" object_dyn_prop == "<<state_60B.Object_DynProp<<std::endl;
+					//object的动态属性，表示object是运动的还是静止的（
+					//std::cout<<" object_rcs == "<<state_60B.Object_RCS* 0.5 - 64.0<<std::endl;
+					//RCS(Radar cross section)雷达散射截面	单位：dBm2
+					ars_408.objects_id.push_back(state_60B.Object_ID);
+					ars_408.data[state_60B.Object_ID].object_id=state_60B.Object_ID;
+					ars_408.data[state_60B.Object_ID].long_dist=(state_60B.Object_DistLong1<<5|state_60B.Object_DistLong2) * 0.2 - 500.0;
+					ars_408.data[state_60B.Object_ID].lat_dist=(state_60B.Object_DistLat1<<8|state_60B.Object_DistLat2)* 0.2 - 204.6;
+					ars_408.data[state_60B.Object_ID].long_rel_vel=(state_60B.Object_VrelLong1<<2|state_60B.Object_VrelLong2)* 0.25 - 128.0;
+					ars_408.data[state_60B.Object_ID].lat_rel_vel=(state_60B.Object_VrelLat1<<3|state_60B.Object_VrelLat2)* 0.25 - 64.0;
+					ars_408.data[state_60B.Object_ID].dyn_prop=state_60B.Object_DynProp;
+					ars_408.data[state_60B.Object_ID].object_rcs=state_60B.Object_RCS* 0.5 - 64.0;
+					break;
+				case 0x60C:
+					buff_ptr=(unsigned char *)&state_60C;
+					for(i = 0; i < rec[j].DataLen; i++)
+					{
+						*buff_ptr=rec[j].Data[i];
+						buff_ptr++;
+					}
+					//std::cout<<"0x60C ::"<<std::endl;
+					//std::cout<<" 0x60C object_id == "<<state_60C.Object_ID<<std::endl;    
+					//id
+					//std::cout<<" get_object_lat_dist_rms == "<<(state_60C.Obj_DistLat_rms1 << 2 | state_60C.Obj_DistLat_rms2)<<std::endl;
+					//获取Lateral(y)坐标标准差	
+					//std::cout<<" object_long_dist_rms == "<<(state_60C.Obj_DistLong_rms)<<std::endl;
+					//获取Longitudinal(x)坐标标准差
+					//std::cout<<" object_lat_rel_vel_rms == "<<   (state_60C.Obj_VrelLat_rms1 << 4 | state_60C.Obj_VrelLat_rms2)<<std::endl;
+					//获取 y 方向的相对速度的标准差	单位：m/s
+					//std::cout<<" object_long_rel_vel_rms == "<<   state_60C.Obj_VrelLong_rms<<std::endl;
+					//获取 x 方向的相对速度的标准差	
+					//std::cout<<" bject_long_rel_accel_rms == "<< (state_60C.Obj_ArelLong_rms1 << 1 | state_60C.Obj_ArelLong_rms2)<<std::endl;
+					//获取 x 方向的相对加速度的标准差	单位：m/s2
+					//std::cout<<" object_lat_rel_accel_rms == "<<    state_60C.Obj_ArelLat_rms <<std::endl;
+					//获取 y 方向的相对加速度的标准差	单位：m/s2
+					//std::cout<<" object_meas_state == "<<   state_60C.Obj_MeasState<<std::endl;
+					//测量状态：在新的测量周期内 object 是否有效，是否被 clusters 确认。0x0:deleted  0x1:new  0x2:measured  0x3: predicted  0x4:deleted for merge  0x5:new from merg
+					//std::cout<<" object_prob_of_exist == "<<  state_60C.Obj_ProbOfExist<<std::endl;
+					//存在的概率。0x0:invalid  0x1:<25%  0x2:<50%  0x3:<75%  0x4:<90%  0x5:<99%  0x6:<99.9%  0x7:<=100%
+					//std::cout<<" object_orientation_rms == "<<  (state_60C.Obj_Orientation_rms1 << 3 | state_60C.Obj_Orientation_rms2)<<std::endl;
+					//获取方位角标准差	单位：deg
+					//ars_408.data[state_60C.Object_ID].object_id=state_60C.Object_ID;
+					ars_408.data[state_60C.Object_ID].lat_dist_rms=state_60C.Obj_DistLat_rms1 << 2 | state_60C.Obj_DistLat_rms2;
+					ars_408.data[state_60C.Object_ID].long_dist_rms=state_60C.Obj_DistLong_rms;
+					ars_408.data[state_60C.Object_ID].lat_rel_vel_rms=state_60C.Obj_VrelLat_rms1 << 4 | state_60C.Obj_VrelLat_rms2;
+					ars_408.data[state_60C.Object_ID].long_rel_vel_rms=state_60C.Obj_VrelLong_rms;
+					ars_408.data[state_60C.Object_ID].long_rel_accel_rms=state_60C.Obj_ArelLong_rms1 << 1 | state_60C.Obj_ArelLong_rms2;
+					ars_408.data[state_60C.Object_ID].lat_rel_accel_rms=state_60C.Obj_ArelLat_rms;
+					ars_408.data[state_60C.Object_ID].meas_state=state_60C.Obj_MeasState;
+					ars_408.data[state_60C.Object_ID].orientation_rms=state_60C.Obj_Orientation_rms1 << 3 | state_60C.Obj_Orientation_rms2;
+					
+				
+						// if(state_60C.Obj_ProbOfExist == 0x0){ProbOfExis="invalid";}
+						// else if(state_60C.Obj_ProbOfExist == 0x1){ProbOfExis="10%";}
+						// else if(state_60C.Obj_ProbOfExist == 0x2){ProbOfExis="25%";}
+						// else if(state_60C.Obj_ProbOfExist == 0x3){ProbOfExis="50%";}
+						// else if(state_60C.Obj_ProbOfExist == 0x4){ProbOfExis="75%";}
+						// else if(state_60C.Obj_ProbOfExist == 0x5){ProbOfExis="90%";}
+						// else if(state_60C.Obj_ProbOfExist == 0x6){ProbOfExis="99.9%";}
+						// else if(state_60C.Obj_ProbOfExist == 0x7){ProbOfExis=">=100%";}
+						// else{ProbOfExis="<0%";}
 
+					ars_408.data[state_60C.Object_ID].prob_of_exist=ProbOfExis;
+					break;
+		
+				case 0x60D:
+
+					buff_ptr=(unsigned char *)&state_60D;
+					for(i = 0; i < rec[j].DataLen; i++)
+					{
+						*buff_ptr=rec[j].Data[i];
+						buff_ptr++;
+					};
+					//std::cout<<"0x60D :: "<<std::endl;
+					//std::cout<<" 0x60D object_id == " <<state_60D.Object_ID<<std::endl;
+					//id
+					//std::cout<<" object_long_rel_accel == "<<(state_60D.Object_ArelLong1<<3|state_60D.Object_ArelLong2)* 0.01 - 10.0<<std::endl;
+					//存储位置从21-23位，8-15位。<<3取的是高位部分(8-15位)数据，| Long2取的是剩下的低位部分(21-23位)数据。Offset为 -10.0，Res为 0.01
+					//std::cout<<" object_lat_rel_accel == "<<(state_60D.Object_ArelLat1 << 4 |state_60D.Object_ArelLat2)* 0.01 - 2.50<<std::endl;
+					//存储位置从28-31位，16-20位。<<4取的是高位部分(16-20位)数据，| Long2取的是剩下的低位部分(28-31位)数据。Offset为 -2.50，Res为 0.01
+					//std::cout<<" object_orientation_angle == "<<(state_60D.Object_OrientationAngle1<< 2 |state_60D.Object_OrientationAngle2) * 0.4 - 180.0<<std::endl;
+					//获取object的方位角。随着时间的推移，被追踪的障碍物的旋转运动所产生的角度变化
+					//std::cout<<" object_class == "<<state_60D.Object_Class<<std::endl;
+					//获取目标类别，0x0:point  0x1:car  0x2:truck  0x3:not in use  0x4:motorcycle  0x5:bicycle  0x6:wide  0x7:reserved
+					//std::cout<<" object_length == "<<state_60D.Object_Length * 0.2<<std::endl;
+					///获取被跟踪object的长度	
+					//std::cout<<" object_width == "<<state_60D.Object_Width * 0.2<<std::endl;
+					//获取被跟踪object的宽度	单位：m
+					//ars_408.data[state_60D.Object_ID].object_id=state_60D.Object_ID;
+					ars_408.data[state_60D.Object_ID].long_rel_accel=(state_60D.Object_ArelLong1<<3|state_60D.Object_ArelLong2)* 0.01 - 10.0;
+					ars_408.data[state_60D.Object_ID].lat_rel_accel=(state_60D.Object_ArelLat1 << 4 |state_60D.Object_ArelLat2)* 0.01 - 2.5;
+					ars_408.data[state_60D.Object_ID].orientation_angle=(state_60D.Object_OrientationAngle1<< 2 |state_60D.Object_OrientationAngle2) * 0.4 - 180.0;
+					ars_408.data[state_60D.Object_ID].length=state_60D.Object_Length * 0.2;
+					ars_408.data[state_60D.Object_ID].width=state_60D.Object_Width * 0.2;
+					//
+					// if(state_60D.Object_Class==0x0){object_class="point";}
+					// else if(state_60D.Object_Class==0x1){object_class="car";}
+					// else if(state_60D.Object_Class==0x2){object_class="truck";}
+					// else if(state_60D.Object_Class==0x3){object_class="people";}
+					// else if(state_60D.Object_Class==0x4){object_class="motorcycle";}
+					// else if(state_60D.Object_Class==0x5){object_class="bicycle";}
+					// else if(state_60D.Object_Class==0x6){object_class="wide";}
+					// else if(state_60D.Object_Class==0x7){object_class="reserved";}
+					// else{object_class="NULL";}				
+					
+					ars_408.data[state_60D.Object_ID].object_class=object_class;
+
+					break;
+				//default:
+		            std::cout << "no find id:" << std::hex<<rec[j].ID<<std::endl;
+		            break;
+				}
 			}
 			
 		}	
@@ -1037,6 +1362,7 @@ int main(int argc, char** argv)
    steering_status_pub=node->create_publisher<autoware_vehicle_msgs::msg::SteeringReport>("/vehicle/status/steering_status", rclcpp::QoS{1});//转向状态
    velocity_Status_pub=node->create_publisher<autoware_vehicle_msgs::msg::VelocityReport>("/vehicle/status/velocity_status", rclcpp::QoS{1});//速度状态
    websocket_pub=node->create_publisher<websocket_msgs::msg::Websocket>("/websocket_in", rclcpp::QoS{1});//速度状态
+   marker_pub=node->create_publisher<visualization_msgs::msg::Marker>("/visualization_maker", rclcpp::QoS{1});//速度状态
 
 	
 	int m_run0=1;
@@ -1090,20 +1416,20 @@ void can_init()
 		printf(">>Init CAN1 error\n");
 		VCI_CloseDevice(VCI_USBCAN2,0);
 	}
-
+	
 	if(VCI_StartCAN(VCI_USBCAN2,0,0)!=1)
 	{
 		printf(">>Start CAN1 error\n");
 		VCI_CloseDevice(VCI_USBCAN2,0);
 
 	}
-
+	
 	if(VCI_InitCAN(VCI_USBCAN2,0,1,&config)!=1)
 	{
 		printf(">>Init CAN2 error\n");
 		VCI_CloseDevice(VCI_USBCAN2,0);
 	}
-
+	
 	if(VCI_StartCAN(VCI_USBCAN2,0,1)!=1)
 	{
 		printf(">>Start CAN2 error\n");
