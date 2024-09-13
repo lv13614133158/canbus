@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
   
- 
+  <include file="$(find-pkg-share autoware_raw_vehicle_cmd_converter)/launch/raw_vehicle_converter.launch.xml"/>
   <node pkg="canbus" exec="canbus_node" name="canbus" output="both">
    </node>
 
